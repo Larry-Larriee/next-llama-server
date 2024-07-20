@@ -30,9 +30,34 @@ async function connectToDB() {
 }
 connectToDB();
 
+// node.js runs top to bottom. Once the sever connects to mongoDB, locate the tailwind collection
 const tailwindCollection = client
   .db(process.env.MONGODB_DATABASE)
   .collection(process.env.MONGODB_COLLECTION);
+
+// find everything
+let tailwindSampleData = () => {
+  tailwindCollection
+    .find({})
+    .toArray()
+    .then((result) => {
+      console.log("tailwindCollection: ", result);
+    });
+};
+// tailwindSampleData();
+
+const app = express();
+// allow client to make requests to server (allowing all origins at the moment)
+app.use(cors({}));
+
+// testing server
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.listen(3000, () => {
+  console.log("Server listening on port 3000");
+});
 
 // puppeteer.launch().then(async (browser) => {
 //   const page = await browser.newPage();
