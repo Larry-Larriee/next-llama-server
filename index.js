@@ -1,7 +1,6 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
-const puppeteer = require("puppeteer");
 
 // config() loads environment variables in process.env object (object built into node.js)
 require("dotenv").config();
@@ -35,22 +34,42 @@ const tailwindCollection = client
   .db(process.env.MONGODB_DATABASE)
   .collection(process.env.MONGODB_COLLECTION);
 
-// find everything
-let tailwindSampleData = () => {
-  tailwindCollection
-    .find({})
-    .toArray()
-    .then((result) => {
-      console.log("tailwindCollection: ", result);
-    });
-};
-// tailwindSampleData();
-
 const app = express();
 // allow client to make requests to server (allowing all origins at the moment)
 app.use(cors({}));
 
-// testing server
+// leaderboard route returns an array of objects
+// each object contains the object ID, username, date, tailwind level, tailwind data, and time of level completion (seconds)
+app.get("/leaderboard", (req, res) => {
+  tailwindCollection
+    .find({})
+    .toArray()
+    .then((result) => {
+      res.send(result);
+    });
+});
+
+// editLeaderboard route allows the client to edit the leaderboard by adding their information
+// the client can add their username, date, tailwind level, tailwind data, and time of level completion (seconds)
+app.post("/editLeaderboard", (req, res) => {
+  const { username, date, tailwindLevel, tailwindData, time } = req.body;
+
+  tailwindCollection
+    .insertOne({
+      username,
+      date,
+      tailwindLevel,
+      tailwindData,
+      time,
+    })
+    .then(() => {
+      res.send("Successfully added to the leaderboard!");
+    })
+    .catch((error) => {
+      res.send("Error: " + error);
+    });
+});
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -59,6 +78,7 @@ app.listen(3000, () => {
   console.log("Server listening on port 3000");
 });
 
+// const puppeteer = require("puppeteer");
 // puppeteer.launch().then(async (browser) => {
 //   const page = await browser.newPage();
 //   await page.goto("https://example.com");
