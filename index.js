@@ -1,6 +1,7 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
+const puppeteer = require("puppeteer");
 
 // config() loads environment variables in process.env object (object built into node.js)
 require("dotenv").config();
@@ -70,6 +71,23 @@ app.post("/editLeaderboard", (req, res) => {
     });
 });
 
+// tailwindAccuracy route takes the user's tailwindCode and compares how the result looks to the solution result
+// tailwindData.tailwindPage (http) the page of the level that the user is on
+// tailwindData.tailwindCode (string) the code that the user wrote
+app.post("/tailwindAccuracy", (req, res) => {
+  const { tailwindData } = req.body;
+
+  puppeteer.launch().then(async (browser) => {
+    let page = await browser.newPage();
+    await page.goto("https://next-llama.vercel.app/levels/level1");
+
+    await page.screenshot({ path: "example.png" });
+    await browser.close();
+  });
+
+  res.send("Success!");
+});
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -77,12 +95,3 @@ app.get("/", (req, res) => {
 app.listen(3000, () => {
   console.log("Server listening on port 3000");
 });
-
-// const puppeteer = require("puppeteer");
-// puppeteer.launch().then(async (browser) => {
-//   const page = await browser.newPage();
-//   await page.goto("https://example.com");
-//   await page.screenshot({ path: "example.png" });
-
-//   await browser.close();
-// });
