@@ -76,20 +76,30 @@ app.post("/editLeaderboard", (req, res) => {
 });
 
 // tailwindAccuracy route takes the user's tailwindCode and compares how the result looks to the solution result
-// tailwindData.tailwindPage (http) the page of the level that the user is on
-// tailwindData.tailwindCode (string) the code that the user wrote
+// tailwindData.level (http) the page of the level that the user is on
+// tailwindData.userSolution (string) the code that the user wrote
 app.post("/tailwindAccuracy", (req, res) => {
-  const { tailwindData } = req.body;
+  const { level, userSolution } = req.body;
 
   puppeteer.launch().then(async (browser) => {
     let page = await browser.newPage();
-    await page.goto("https://next-llama.vercel.app/levels/level1");
+    await page.goto(
+      "https://next-llama.vercel.app/levels/level" + level.toString()
+    );
 
-    await page.screenshot({ path: "tailwindResults/example.png" });
+    try {
+      await page.waitForSelector(".textEditor");
+      await page.type(".textEditor", userSolution);
+
+      let userSolutionUI = await page.waitForSelector(".userSolutionUI");
+      await userSolutionUI.screenshot({ path: "results/example.png" });
+    } catch (error) {
+      console.log("error: " + error);
+    }
+
     await browser.close();
+    res.send("Success!");
   });
-
-  res.send("Success!");
 });
 
 app.get("/", (req, res) => {
