@@ -2,6 +2,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
+const bodyParser = require("body-parser");
 
 // config() loads environment variables in process.env object (object built into node.js)
 require("dotenv").config();
@@ -38,6 +39,9 @@ const tailwindCollection = client
 const app = express();
 // allow client to make requests to server (allowing all origins at the moment)
 app.use(cors({}));
+
+// Parse JSON bodies (content-type: application/json) required for POST requests
+app.use(bodyParser.json());
 
 // leaderboard route returns an array of objects
 // each object contains the object ID, username, date, tailwind level, tailwind data, and time of level completion (seconds)
@@ -81,7 +85,7 @@ app.post("/tailwindAccuracy", (req, res) => {
     let page = await browser.newPage();
     await page.goto("https://next-llama.vercel.app/levels/level1");
 
-    await page.screenshot({ path: "example.png" });
+    await page.screenshot({ path: "tailwindResults/example.png" });
     await browser.close();
   });
 
