@@ -93,12 +93,22 @@ app.post("/tailwindAccuracy", (req, res) => {
 
     const textEditor = await page.$(".textEditor");
     const userSolutionUI = await page.waitForSelector(".userSolutionUI");
+    const levelSolutionButton = await page.waitForSelector(
+      ".levelSolutionButton"
+    );
 
     await backspaceAll(page, ".textEditor");
     await page.type(".textEditor", userSolution);
 
     await userSolutionUI.screenshot({
-      path: `results/example${imageCount}.png`,
+      path: `results/user${imageCount}.png`,
+    });
+
+    await levelSolutionButton.click();
+    const levelSolutionUI = await page.waitForSelector(".levelSolutionUI");
+
+    await levelSolutionUI.screenshot({
+      path: `results/solution${imageCount}.png`,
     });
     imageCount++;
 
