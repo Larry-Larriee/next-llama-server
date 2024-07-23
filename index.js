@@ -4,6 +4,8 @@ const cors = require("cors");
 const puppeteer = require("puppeteer");
 const bodyParser = require("body-parser");
 
+const backspaceAll = require("./helper/backspaceAll");
+
 // config() loads environment variables in process.env object (object built into node.js)
 require("dotenv").config();
 
@@ -75,6 +77,8 @@ app.post("/editLeaderboard", (req, res) => {
     });
 });
 
+let imageCount = 0;
+
 // tailwindAccuracy route takes the user's tailwindCode and compares how the result looks to the solution result
 // tailwindData.level (http) the page of the level that the user is on
 // tailwindData.userSolution (string) the code that the user wrote
@@ -87,15 +91,16 @@ app.post("/tailwindAccuracy", (req, res) => {
       "https://next-llama.vercel.app/levels/level" + level.toString()
     );
 
-    try {
-      await page.waitForSelector(".textEditor");
-      await page.type(".textEditor", userSolution);
+    const textEditor = await page.$(".textEditor");
+    const userSolutionUI = await page.waitForSelector(".userSolutionUI");
 
-      let userSolutionUI = await page.waitForSelector(".userSolutionUI");
-      await userSolutionUI.screenshot({ path: "results/example.png" });
-    } catch (error) {
-      console.log("error: " + error);
-    }
+    await backspaceAll(page, ".textEditor");
+    await page.type(".textEditor", userSolution);
+
+    await userSolutionUI.screenshot({
+      path: `results/example${imageCount}.png`,
+    });
+    imageCount++;
 
     await browser.close();
     res.send("Success!");
