@@ -3,6 +3,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
 const bodyParser = require("body-parser");
+const resemble = require("resemblejs");
 
 const backspaceAll = require("./helper/backspaceAll");
 
@@ -79,11 +80,23 @@ app.post("/editLeaderboard", (req, res) => {
 
 let imageCount = 0;
 
+// not literally images but the collectection stores the index of images that are taken
+// let imageCollection = client
+//   .db(process.env.MONGODB_DATABASE)
+//   .collection("images");
+
 // tailwindAccuracy route takes the user's tailwindCode and compares how the result looks to the solution result
 // tailwindData.level (http) the page of the level that the user is on
 // tailwindData.userSolution (string) the code that the user wrote
 app.post("/tailwindAccuracy", (req, res) => {
   const { level, userSolution } = req.body;
+  // let imageCount;
+
+  // imageCollection.find({}).toArray().then((result) => {
+  //   imageCount = result.imageCount;
+  // });
+
+  // console.log("imageCount: " + imageCount);
 
   puppeteer.launch().then(async (browser) => {
     let page = await browser.newPage();
@@ -91,13 +104,13 @@ app.post("/tailwindAccuracy", (req, res) => {
       "https://next-llama.vercel.app/levels/level" + level.toString()
     );
 
-    const textEditor = await page.$(".textEditor");
+    const textEditor = await page.waitForSelector(".textEditor");
     const userSolutionUI = await page.waitForSelector(".userSolutionUI");
     const levelSolutionButton = await page.waitForSelector(
       ".levelSolutionButton"
     );
 
-    await backspaceAll(page, ".textEditor");
+    await backspaceAll(page, textEditor);
     await page.type(".textEditor", userSolution);
 
     await userSolutionUI.screenshot({
@@ -110,10 +123,22 @@ app.post("/tailwindAccuracy", (req, res) => {
     await levelSolutionUI.screenshot({
       path: `results/solution${imageCount}.png`,
     });
+
+    let accuracy = 0;
+
+    // console logging diff gives functions for diff. the data argument in onComplete gives the accuracy percentage
+    const diff = resemble(`results/user${imageCount}.png`)
+      .compareTo(`results/solution${imageCount}.png`)
+      .ignoreColors()
+      .onComplete((data) => {
+        accuracy = 100 - data.misMatchPercentage;
+      });
+
+    // when the server reopens, purge all images and reset imageCount to 0 (saving space)
     imageCount++;
 
     await browser.close();
-    res.send("Success!");
+    res.send(accuracy.toString());
   });
 });
 
